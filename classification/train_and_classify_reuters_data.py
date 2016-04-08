@@ -4,15 +4,12 @@ from pprint import pprint
 import re
 from HTMLParser import HTMLParser
 import pickle
-
 from reuters_parser import ReutersParser
-
 from sklearn.cross_validation import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import confusion_matrix
 from sklearn.svm import SVC
 from sklearn.externals import joblib
-
 
 
 def obtain_topic_tags():
@@ -124,7 +121,6 @@ def main():
     
     print "\nTotal runtime %.2f seconds." % (time.time() - start_time)
     
-
 
 if __name__ == "__main__":
     main()

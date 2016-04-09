@@ -2,10 +2,11 @@
 Classificate documents on topics, using Reuters-21578 data.
 
 
+
 ### Requirements
 Please see requirements.txt.
 <br />
-To install these packages, use
+To install these packages, use the following command in a <a href="http://docs.python-guide.org/en/latest/dev/virtualenvs/" target="_blank"> virtualenv </a>.
 ```bash
 $ pip install -r requirements.txt
 ```

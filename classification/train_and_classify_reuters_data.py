@@ -108,26 +108,26 @@ def get_number_of_train_test_from_docs(ref_docs):
     return count_train, count_test 
 
 
-def print_test_summary(ref_docs, x_test, y_test, pred, svm):
+def print_test_summary(ref_docs, x_test, labels, pred, svm):
     count_train_docs, count_test_docs = get_number_of_train_test_from_docs(ref_docs)
     print count_train_docs, " Train Docs"
     print count_test_docs, "Test Docs"
     """
     for i in range(0, len(pred)):
-        print y_test[i], pred[i] 
-        if y_test[i] == pred[i]:
+        print labels[i], pred[i] 
+        if labels[i] == pred[i]:
             print "OK"
         else:
             print "NOK"
     """
     # Output the hit-rate and the confusion matrix for each model
-    print "\nHit-rate score is ", svm.score(x_test, y_test)
+    print "\nHit-rate score is ", svm.score(x_test, labels)
     """ By definition a confusion matrix C is such that C(i, j) is 
     equal to the number of observations known to be in group i, 
     but predicted to be in group j.
     """
     print "Confusion matrix"
-    print(confusion_matrix(pred, y_test))
+    print(confusion_matrix(pred, labels))
     
 
 
@@ -136,15 +136,15 @@ def test_and_print(X_train, k_test_tag, ref_docs, vectorizer, svm):
     x_train_tfidf = tfidf_transformer.fit_transform(X_train)
 
     corpus_test = [doc[1] for doc in ref_docs if doc[2] == k_test_tag]        
-    y_test = [doc[0] for doc in ref_docs if doc[2] == k_test_tag]
+    labels = [doc[0] for doc in ref_docs if doc[2] == k_test_tag]
     
     x_test_counts = vectorizer.transform(corpus_test)
     x_test = tfidf_transformer.transform(x_test_counts) 
     
     # Make an array of predictions on the test set
     prediction = svm.predict(x_test)
-    # print "\nHit-rate score is ", svm.score(X_test, y_test)
-    print_test_summary(ref_docs, x_test, y_test, prediction, svm)
+    # print "\nHit-rate score is ", svm.score(X_test, labels)
+    print_test_summary(ref_docs, x_test, labels, prediction, svm)
 
 
 def main():
@@ -174,13 +174,13 @@ def main():
                                                     k_train_tag, \
                                                     k_test_tag)
     """
-    x_test, y_test, vectorizer = create_tfidf_data(ref_docs, \
+    x_test, labels, vectorizer = create_tfidf_data(ref_docs, \
                                                     k_train_tag, \
                                                     k_train_tag, \
                                                     k_test_tag)
     """
     # Create the training-test split of the data
-    """x_train, X_test, labels, y_test = train_test_split(x, y, \
+    """x_train, X_test, labels, labels = train_test_split(x, y, \
                                                         test_size=0.2, \
                                                         random_state=42)
     """

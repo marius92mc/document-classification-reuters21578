@@ -1,5 +1,5 @@
 earn
-acquisitions
+acq
 money-fx
 grain
 crude

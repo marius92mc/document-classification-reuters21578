@@ -28,22 +28,3 @@ from classification/
 $ python train_and_classify_reuters_data.py 
 ```
 
-### Classify 
-```bash
-$ python test_classifier.py 
-```
-Will predict the topic for the testing articles from 
-```bash
-classification/data/reuters_test_json/reuters_test1.json 
-```
-If all the <i>json</i> testing articles are provided with 
-the specific topics field mentioned, 
-<br />
-it will show the 
-<b> Hit-rate score </b> and the <b> Confusion matrix </b>. 
-
-### Example
-```bash
-$ python train_and_classify_reuters_data 
-$ python test_classifier.py
-```

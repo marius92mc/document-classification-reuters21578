@@ -34,9 +34,12 @@ class ReutersParser(HTMLParser):
         self.in_body = False
         self.in_topics = False
         self.in_topic_d = False
+        self.in_reuters = False 
         self.body = ""
         self.topics = []
         self.topic_d = ""
+        self.reuters = ""
+        self.cgisplit = ""
 
     def parse(self, fd):
         """
@@ -60,7 +63,12 @@ class ReutersParser(HTMLParser):
         tag has been found.
         """
         if tag == "reuters":
-            pass
+            #pass
+            self.in_reuters = True
+            for attribute in attrs:
+                if attribute[0] == "cgisplit":
+                    self.cgisplit = attribute[1].encode("utf-8").lower()
+                    break
         elif tag == "body":
             self.in_body = True
         elif tag == "topics":
@@ -86,7 +94,8 @@ class ReutersParser(HTMLParser):
         """
         if tag == "reuters":
             self.body = re.sub(r'\s+', r' ', self.body)
-            self.docs.append( (self.topics, self.body) )
+            self.in_reuters = False 
+            self.docs.append( (self.topics, self.body, self.cgisplit) )
             self._reset()
         elif tag == "body":
             self.in_body = False
@@ -103,6 +112,6 @@ class ReutersParser(HTMLParser):
         for that particular tag, up until the end closing tag appears.
         """
         if self.in_body:
-            self.body += data
+            self.body += data.encode("utf-8")
         elif self.in_topic_d:
-            self.topic_d += data
+            self.topic_d += data.encode("utf-8")

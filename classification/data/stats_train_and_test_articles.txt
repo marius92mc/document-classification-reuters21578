@@ -1,0 +1,4 @@
+Number of articles with CGISPLIT='TRAINING-SET' tag 
+   20856
+Number of articles with CGISPLIT='PUBLISHED-TESTSET' tag 
+     722

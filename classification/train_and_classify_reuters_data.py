@@ -14,6 +14,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.svm import SVC
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import classification_report
 
 
 def obtain_train_test_tags():
@@ -173,11 +174,12 @@ def print_test_summary(ref_docs, x_test, topics, \
                                               pos_label=2)
     if len(metrics) != 4:
         return score 
-    print "Precision", metrics[0]
-    print "Recall", metrics[1]
-    print "fbeta_score", metrics[2]
-    print "Support", metrics[3]
-    return score
+    print "Precision %.3f" % metrics[0][0]
+    print "Recall %.3f" % metrics[1][0]
+    print "fbeta_score %.3f" % metrics[2][0]
+    #print "Support", metrics[3][0]
+    #print classification_report(labels, pred)
+    return score, metrics[0][0], metrics[1][0], metrics[2][0]
     
 
 def test_and_print(x_train, topics, k_train_tag, \
@@ -200,11 +202,11 @@ def test_and_print(x_train, topics, k_train_tag, \
                               labels, prediction, svm, \
                               k_train_tag, k_test_tag)
     
-def get_average_score(scores):
+def get_average(collection):
     sum = 0
-    for score in scores:
-        sum += score
-    return float(sum / len(scores))
+    for entry in collection:
+        sum += entry 
+    return float(sum / len(collection))
 
 def main():
     start_time = time.time()
@@ -228,6 +230,9 @@ def main():
     all_docs = docs 
     all_topics = topics 
     scores = []
+    precisions = []
+    recalls = []
+    f1_values = []
     num_test = 0
 
     for topic in all_topics:
@@ -267,15 +272,29 @@ def main():
         #joblib.dump(svm, "saved_data/saved_trained_data.pkl")
         #joblib.dump(vectorizer, "saved_data/saved_tfidfvectorizer_instance.pkl")
 
-        score = test_and_print(x_train, topics, k_train_tag, \
-                               k_test_tag, ref_docs, \
-                               vectorizer, svm)
+        score, precision, recall, f1_value = test_and_print(x_train, \
+                                                            topics, \
+                                                            k_train_tag, \
+                                                            k_test_tag, \
+                                                            ref_docs, \
+                                                            vectorizer, \
+                                                            svm)
         scores.append(score)
+        precisions.append(precision)
+        recalls.append(recall)
+        f1_values.append(f1_value)
         print "\n\n"
         num_test += 1
 
+    average_hit_score = get_average(scores)
+    average_precision = get_average(precisions)
+    average_recall = get_average(recalls) 
+    average_f1 = get_average(f1_values)
     print "\n"
-    print "Average Hit-rate score", get_average_score(scores)
+    print "Average Hit-rate score %.3f" % average_hit_score 
+    print "Average Precision %.3f" % average_precision 
+    print "Average Recall %.3f" % average_recall 
+    print "Average f1 %.3f" % average_f1
     print "Total runtime %.2f seconds.\n" % (time.time() - start_time)
     
 

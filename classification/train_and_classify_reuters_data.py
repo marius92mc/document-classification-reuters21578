@@ -1,3 +1,4 @@
+import sys
 import time
 import html
 from pprint import pprint
@@ -6,6 +7,7 @@ from HTMLParser import HTMLParser
 import pickle
 
 from reuters_parser import ReutersParser
+from stemmed_tfidfvectorizer import StemmedTfidfVectorizer 
 
 from sklearn.cross_validation import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -66,7 +68,7 @@ def filter_doc_list_through_topics_train_test(topics, types, docs):
     return ref_docs
 
 
-def create_tfidf_data(docs, doc_type, k_train_tag, k_test_tag):
+def create_tfidf_data(docs, doc_type, k_train_tag, k_test_tag, argv):
     """
     Creates a document corpus list (by stripping out the
     class labels), then applies the TF-IDF transform to this
@@ -81,9 +83,20 @@ def create_tfidf_data(docs, doc_type, k_train_tag, k_test_tag):
     
     # Create the document corpus list
     corpus = [d[1] for d in docs]
-    #print corpus[0]
+
     # Create the TF-IDF vectoriser and transform the corpus
-    vectorizer = TfidfVectorizer(stop_words='english', min_df=1)
+    if len(argv) == 1: 
+        vectorizer = StemmedTfidfVectorizer(stop_words="english", \
+                                            analyzer="word", \
+                                            min_df=1)
+    if len(argv) > 1:
+        if "--no-stemming" in argv[1]:
+            vectorizer = TfidfVectorizer(stop_words="english", \
+                                         analyzer="word", \
+                                         min_df=1)
+        else:
+            if "--no-stopwords" in argv[1]:
+                vectorizer = TfidfVectorizer(analyzer="word", min_df=1) 
     if doc_type == k_train_tag:
         x = vectorizer.fit_transform(corpus)
     else:
@@ -208,7 +221,7 @@ def get_average(collection):
         sum += entry 
     return float(sum / len(collection))
 
-def main():
+def main(argv):
     start_time = time.time()
     # Create the list of Reuters data and create the parser
     files = ["data/reut2-%03d.sgm" % r for r in range(0, 22)]
@@ -264,7 +277,8 @@ def main():
         x_train, labels, vectorizer = create_tfidf_data(ref_docs, \
                                                         k_train_tag, \
                                                         k_train_tag, \
-                                                        k_test_tag)
+                                                        k_test_tag, \
+                                                        argv)
         # Create and train the Support Vector Machine
         svm = train_svm(x_train, labels)
         # Save data from svm
@@ -299,5 +313,5 @@ def main():
     
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[0:])
     

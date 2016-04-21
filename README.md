@@ -35,7 +35,7 @@ Flags
 --no-stopwords # don't use "remove stopwords" when tranforming data 
 ```
 Last flag, if mentioned
-```
+```bash
 --svm         # use <a href="https://en.wikipedia.org/wiki/Support_vector_machine"> Support Vector Machine </a> classifier 
 --naive-bayes # use <a href="https://en.wikipedia.org/wiki/Naive_Bayes_classifier#Multinomial_naive_Bayes"> Naive-Bayes </a> classifier
 --perceptron  # use <a href="https://en.wikipedia.org/wiki/Perceptron"> Perceptron </a>

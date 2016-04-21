@@ -14,6 +14,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics import confusion_matrix
 from sklearn.svm import SVC
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import Perceptron
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import classification_report
@@ -86,17 +88,25 @@ def create_tfidf_data(docs, doc_type, k_train_tag, k_test_tag, argv):
 
     # Create the TF-IDF vectoriser and transform the corpus
     if len(argv) == 1: 
+        print "With remove stopwords and stemming"
         vectorizer = StemmedTfidfVectorizer(stop_words="english", \
                                             analyzer="word", \
                                             min_df=1)
     if len(argv) > 1:
-        if "--no-stemming" in argv[1]:
+        if "--no-stemming" == argv[1]:
+            print "Without stemming"
             vectorizer = TfidfVectorizer(stop_words="english", \
                                          analyzer="word", \
                                          min_df=1)
         else:
-            if "--no-stopwords" in argv[1]:
+            if "--no-stopwords" == argv[1]:
+                print "Without removing stopwords"
                 vectorizer = TfidfVectorizer(analyzer="word", min_df=1) 
+            else: 
+                print "With remove stopwords and stemming"
+                vectorizer = StemmedTfidfVectorizer(stop_words="english", \
+                                                    analyzer="word", \
+                                                    min_df=1)
     if doc_type == k_train_tag:
         x = vectorizer.fit_transform(corpus)
     else:
@@ -104,16 +114,18 @@ def create_tfidf_data(docs, doc_type, k_train_tag, k_test_tag, argv):
     return x, y, vectorizer
 
 
-def train_svm(X, y):
-    """
-    Create and train the Support Vector Machine.
-    """
-    svm = SVC(C=1000000.0, gamma=0.0, kernel='rbf')
-    print "Training..."
+def train(X, y, classifier_name):
+    if classifier_name == "svm":
+        classifier_data = SVC(C=1000000.0, gamma=0.0, kernel='rbf')
+    if classifier_name == "naive-bayes":
+        classifier_data = MultinomialNB(alpha=0.01)
+    if classifier_name == "perceptron":
+        classifier_data = Perceptron(n_iter=50)
+    print "Training with %s..." % (classifier_name)
     start_time = time.time() 
-    svm.fit(X, y)
+    classifier_data.fit(X, y)
     print "Training time %.2f seconds." % (time.time() - start_time)
-    return svm
+    return classifier_data
 
 
 def get_number_of_train_test_from_docs(ref_docs):
@@ -146,7 +158,7 @@ def get_count_docs_per_label_per_type(ref_docs, topics, doc_type):
 
 
 def print_test_summary(ref_docs, x_test, topics, \
-                       labels, pred, svm, \
+                       labels, pred, classifier_data, \
                        k_train_tag, k_test_tag):
     print len(ref_docs), "Docs"
     count_train_docs, count_test_docs = \
@@ -174,29 +186,23 @@ def print_test_summary(ref_docs, x_test, topics, \
         else:
             print "NOK"
     """
-    # Output the hit-rate and the confusion matrix for each model
-    score = svm.score(x_test, labels)
+    score = classifier_data.score(x_test, labels)
     print "\nHit-rate score ", score
-    """ By definition a confusion matrix C is such that C(i, j) is 
-    equal to the number of observations known to be in group i, 
-    but predicted to be in group j.
-    """
     print "Confusion matrix"
     print confusion_matrix(pred, labels)
-    metrics = precision_recall_fscore_support(labels, pred, \
-                                              pos_label=2)
+    metrics = precision_recall_fscore_support(labels, pred, pos_label=2)
     if len(metrics) != 4:
         return score 
     print "Precision %.3f" % metrics[0][0]
     print "Recall %.3f" % metrics[1][0]
     print "fbeta_score %.3f" % metrics[2][0]
     #print "Support", metrics[3][0]
-    #print classification_report(labels, pred)
+    #print classification_report(labels, pred, target_names=topics)
     return score, metrics[0][0], metrics[1][0], metrics[2][0]
     
 
 def test_and_print(x_train, topics, k_train_tag, \
-                   k_test_tag, ref_docs, vectorizer, svm):
+                   k_test_tag, ref_docs, vectorizer, classifier_data):
     start_time = time.time()
     tfidf_transformer = TfidfTransformer()
     x_train_tfidf = tfidf_transformer.fit_transform(x_train)
@@ -208,11 +214,10 @@ def test_and_print(x_train, topics, k_train_tag, \
     x_test = tfidf_transformer.transform(x_test_counts) 
     
     # Make an array of predictions on the test set
-    prediction = svm.predict(x_test)
-    # print "\nHit-rate score is ", svm.score(X_test, labels)
+    prediction = classifier_data.predict(x_test)
     print "Testing time %.2f seconds." % (time.time() - start_time)
     return print_test_summary(ref_docs, x_test, topics, \
-                              labels, prediction, svm, \
+                              labels, prediction, classifier_data, \
                               k_train_tag, k_test_tag)
     
 def get_average(collection):
@@ -221,27 +226,11 @@ def get_average(collection):
         sum += entry 
     return float(sum / len(collection))
 
-def main(argv):
-    start_time = time.time()
-    # Create the list of Reuters data and create the parser
-    files = ["data/reut2-%03d.sgm" % r for r in range(0, 22)]
-    parser = ReutersParser()
-    k_train_tag = "training-set"
-    k_test_tag = "published-testset" 
 
-    # Parse the document and force all generated docs into
-    # a list so that it can be printed out to the console
-    print "Parsing training data...\n"
-    docs = []
-    for fn in files:
-        for d in parser.parse(open(fn, 'rb')):
-            docs.append(d)
-    # Obtain the topic tags and filter docs through it 
-    topics = get_most_important_topics()
-    types = obtain_train_test_tags() 
-    
-    all_docs = docs 
-    all_topics = topics 
+def classify(all_docs, all_topics, types, k_train_tag, \
+             k_test_tag, classifier_name, argv):
+    print "Using %s Classifier\n\n" % classifier_name
+    start_time = time.time()
     scores = []
     precisions = []
     recalls = []
@@ -279,8 +268,7 @@ def main(argv):
                                                         k_train_tag, \
                                                         k_test_tag, \
                                                         argv)
-        # Create and train the Support Vector Machine
-        svm = train_svm(x_train, labels)
+        classifier_data = train(x_train, labels, classifier_name)
         # Save data from svm
         #print "Saving data from training..."
         #joblib.dump(svm, "saved_data/saved_trained_data.pkl")
@@ -292,7 +280,7 @@ def main(argv):
                                                             k_test_tag, \
                                                             ref_docs, \
                                                             vectorizer, \
-                                                            svm)
+                                                            classifier_data)
         scores.append(score)
         precisions.append(precision)
         recalls.append(recall)
@@ -309,8 +297,54 @@ def main(argv):
     print "Average Precision %.3f" % average_precision 
     print "Average Recall %.3f" % average_recall 
     print "Average f1 %.3f" % average_f1
-    print "Total runtime %.2f seconds.\n" % (time.time() - start_time)
+    print "Runtime with %s %.2f seconds.\n" % (classifier_name, \
+                                               time.time() - start_time)
+
+
+def main(argv):
+    start_time = time.time()
+    # Create the list of Reuters data and create the parser
+    files = ["data/reut2-%03d.sgm" % r for r in range(0, 22)]
+    parser = ReutersParser()
+    k_train_tag = "training-set"
+    k_test_tag = "published-testset" 
+
+    # Parse the document and force all generated docs into
+    # a list so that it can be printed out to the console
+    print "Parsing training data...\n"
+    docs = []
+    for fn in files:
+        for d in parser.parse(open(fn, 'rb')):
+            docs.append(d)
+    # Obtain the topic tags and filter docs through it 
+    topics = get_most_important_topics()
+    types = obtain_train_test_tags() 
     
+    all_docs = docs 
+    all_topics = topics 
+
+    classifiers = ["svm", "naive-bayes", "perceptron"]
+
+    classified = False 
+    if len(argv) > 1:
+        if "--svm" == argv[len(argv) - 1]:
+            classify(all_docs, all_topics, types, k_train_tag, \
+                     k_test_tag, "svm", argv)
+            classified = True 
+        if "--naive-bayes" == argv[len(argv) - 1]:
+            classify(all_docs, all_topics, types, k_train_tag, \
+                     k_test_tag, "naive-bayes", argv)
+            classified = True 
+        if "--perceptron" == argv[len(argv) - 1]:
+            classify(all_docs, all_topics, types, k_train_tag, \
+                     k_test_tag, "perceptron", argv)
+            classified = True 
+    if classified == False:
+        for classifier_name in classifiers:
+            classify(all_docs, all_topics, types, k_train_tag, \
+                     k_test_tag, classifier_name, argv)
+
+    print "Total runtime %.2f seconds.\n" % (time.time() - start_time)
 
 if __name__ == "__main__":
     main(sys.argv[0:])

@@ -1,8 +1,5 @@
-import html
-from pprint import pprint
 import re
 from HTMLParser import HTMLParser
-
 
 
 class ReutersParser(HTMLParser):

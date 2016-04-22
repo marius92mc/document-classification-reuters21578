@@ -1,9 +1,5 @@
 import sys
 import time
-import html
-from pprint import pprint
-import re
-from HTMLParser import HTMLParser
 import pickle
 
 from reuters_parser import ReutersParser
@@ -346,6 +342,7 @@ def main(argv):
 
     print "Total runtime %.2f seconds.\n" % (time.time() - start_time)
 
+
+
 if __name__ == "__main__":
     main(sys.argv[0:])
-    

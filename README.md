@@ -40,6 +40,8 @@ Last flag, if mentioned
 --naive-bayes # use Naive-Bayes
 --perceptron  # use Perceptron
 ```
+
+### Learning Methods used 
 <a href="https://en.wikipedia.org/wiki/Support_vector_machine"> Support Vector Machine </a> <br />
 <a href="https://en.wikipedia.org/wiki/Naive_Bayes_classifier#Multinomial_naive_Bayes"> Naive-Bayes </a> <br />
 <a href="https://en.wikipedia.org/wiki/Perceptron"> Perceptron </a>
